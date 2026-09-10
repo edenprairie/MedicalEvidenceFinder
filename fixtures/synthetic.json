@@ -1,0 +1,9 @@
+{
+  "id": "synthetic-handbook",
+  "source": "synthetic-handbook.pdf (fictional, not an actual PDF)",
+  "pages": [
+    {"page": 1, "text": "Index: amber review criteria. See the eligibility worksheet later in this handbook."},
+    {"page": 2, "text": "Eligibility worksheet: The fictional amber pathway requires a completed sample checklist. This is demonstration text, not clinical guidance."},
+    {"page": 3, "text": "Blue review criteria: use the fictional blue worksheet. This is demonstration text, not clinical guidance."}
+  ]
+}
