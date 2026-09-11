@@ -1,5 +1,6 @@
 {
   "id": "synthetic-handbook",
+  "family": "synthetic-handbook-family",
   "source": "synthetic-handbook.pdf (fictional, not an actual PDF)",
   "pages": [
     {"page": 1, "text": "Index: amber review criteria. See the eligibility worksheet later in this handbook."},

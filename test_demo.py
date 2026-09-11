@@ -82,6 +82,18 @@ class DemoTests(unittest.TestCase):
     def test_no_match_abstains(self):
         self.assertIsNone(self.cli("search", "unfindable")["result"])
 
+    def test_family_rule_transfers_quote_when_pagination_changes(self):
+        record = self.cli("remember", "amber review criteria", "--page", "2", "--scope", "family", "--quote", "The fictional amber pathway requires a completed sample checklist.", "--author", "test-user", "--reason", "Transfer by section text")
+        changed = self.fixture.copy()
+        changed["pages"] = [changed["pages"][0], {"page": 2, "text": "Cover page."}, {"page": 3, "text": changed["pages"][1]["text"]}, changed["pages"][2]]
+        changed["id"] = "new-revision"
+        changed["family"] = self.fixture["family"]
+        self.document.write_text(json.dumps(changed))
+        result = self.cli("search", "amber review criteria")
+        self.assertEqual(result["page"], 3)
+        self.assertEqual(result["method"], "transferred family correction")
+        self.assertTrue(result["requires_review"])
+
     def test_repeated_quote_rejected_as_ambiguous(self):
         self.fixture["pages"][1]["text"] *= 2
         self.document.write_text(json.dumps(self.fixture))

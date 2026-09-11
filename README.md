@@ -72,6 +72,11 @@ Each search reloads the file, so edits take effect on the next run.
 If multiple active corrections match, the last entry in the file wins; revoking it can expose an older active correction.
 Keep only one active correction per scope unless that fallback is intended.
 
+Corrections can be scoped to an exact revision (the default) or to a document family with the CLI `--scope family` option.
+Family rules store a structural profile and may relocate the verified quote when pagination changes.
+Transferred rules are labeled separately, receive a confidence score, and require review when the profile match is weak.
+The family scope is intentionally conservative: it transfers a unique quoted passage, never a bare page number.
+
 ## What is remembered
 
 A correction records an exact normalized query, document ID, SHA-256 of the entire document record, physical page number, verbatim quote, author, reason, timestamp, and active status.
@@ -106,6 +111,8 @@ Your existing retriever can replace the small lexical ranking block in `search`.
 For a production design, compare lexical and semantic retrieval using actual failing documents, combine their candidates, and validate quoted spans before creating bookmarks.
 Hybrid retrieval, embeddings, OCR, actual PDF reading, PDF bookmarks, clinical interpretation, and performance on 1,000-page PDFs are not implemented or evaluated here.
 The synthetic case demonstrates the memory mechanism only and provides no estimate of clinical accuracy.
+
+The test suite includes a pagination-change fixture demonstrating family transfer to a new physical page with review required.
 
 An editable wiki can explain extraction patterns and reviewed lessons, but structured records should control runtime corrections.
 Start with narrow document/query scope; add a reviewed template or document-family rule only after demonstrating that it transfers to separate fixtures without harming unrelated cases.
