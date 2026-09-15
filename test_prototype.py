@@ -8,6 +8,7 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
 from prototype import Prototype, handler
+from skill_registry import SkillRegistry
 
 
 class PrototypeTests(unittest.TestCase):
@@ -60,6 +61,13 @@ class PrototypeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.teach(text)
         self.assertEqual(self.app.state()['corrections'], [])
+
+    def test_skill_registry_lists_active_skill_and_builds_prompt_context(self):
+        registry = SkillRegistry(Path(__file__).parent / "skills")
+        self.assertEqual(registry.list()[0]["name"], "evidence-selection")
+        context = registry.build_prompt_context("amber", "synthetic-family", {"active": 1})
+        self.assertIn("Never transfer a page number alone", context)
+        self.assertIn("query=amber", context)
 
     def test_http_search_and_origin_protection(self):
         server = HTTPServer(('127.0.0.1', 0), handler(self.app))

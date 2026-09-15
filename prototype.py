@@ -8,6 +8,7 @@ import re
 import uuid
 
 from evidence_demo import ROOT, evidence_page, fingerprint, load_memory, normalize, read, remember, revoke, save, search
+from skill_registry import SkillRegistry
 
 
 class Prototype:
@@ -16,10 +17,12 @@ class Prototype:
         self.corrections = data / "corrections.json"
         self.knowledge = data / "knowledge.json"
         self.document = read(ROOT / "fixtures/synthetic.json")
+        self.skills = SkillRegistry(ROOT / "skills")
 
     def state(self):
         return dict(document=self.document, corrections=load_memory(self.corrections),
-                    knowledge=read(self.knowledge) if self.knowledge.exists() else [])
+                    knowledge=read(self.knowledge) if self.knowledge.exists() else [],
+                    skills=self.skills.list())
 
     def preview(self, text, query):
         # Deliberately bounded grammar; never executes instructions from source text.
@@ -45,6 +48,11 @@ class Prototype:
             return dict(reset=True)
         if route == "/api/preview":
             return self.preview(body["text"], body.get("query", ""))
+        if route == "/api/skill-context":
+            profile = self.document.get("family", self.document["id"])
+            memory = dict(active_corrections=sum(r["active"] for r in load_memory(self.corrections)),
+                          active_knowledge=sum(r.get("active", False) for r in self.state()["knowledge"]))
+            return dict(context=self.skills.build_prompt_context(body.get("query", ""), profile, memory), skills=self.skills.list())
         if route == "/api/search":
             query = body["query"]
             resolved = query

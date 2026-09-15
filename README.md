@@ -5,6 +5,15 @@ It uses entirely fictional extracted page records, not medical evidence.
 The selected project folder was empty and had no Git repository, application stack, PDFs, or existing failures to diagnose.
 This is a standalone demonstration, not an integration with your existing RAG system.
 
+## Externalized agent skills
+
+The `skills/` directory is a versioned, reviewable behavior layer.
+`skills/evidence-selection/SKILL.md` describes how to select sections, validate anchors, handle family transfer, and abstain.
+`skill_registry.py` loads active markdown skills and builds a bounded prompt context for an optional LLM adapter.
+The registry does not call an LLM and is intentionally framework-neutral, so it can later connect to an LLM wiki, hosted prompt registry, or your Python application's own model client.
+Markdown skills explain reusable behavior; JSON or database records retain user corrections and audit history.
+The `/api/skill-context` endpoint shows the exact assembled context for a query without exposing source PDFs.
+
 ## Browser demo
 
 ```sh
