@@ -145,3 +145,82 @@ Nothing is uploaded by this example.
 
 To diagnose the actual failures next, provide the existing project location and a locally available failing example or sanitized extracted-page fixture, with the expected evidence location.
 That enables an end-to-end reproduction before changing the actual extraction or retrieval code.
+
+## Production-shaped skill registry
+
+The repository now contains two deliberately separate layers.
+
+`skills/evidence-selection/SKILL.md` is the reusable behavior layer.
+It tells an agent how to select substantive sections, preserve source anchors, validate quotes, handle family transfer, and abstain when confidence is weak.
+The skill is versioned markdown and can be read by a model adapter, a prompt service, or a future hosted LLM wiki.
+
+`skill_registry.py` is the local adapter.
+It discovers skill directories, parses frontmatter, caches file content by modification time, hot-reloads changed files, and builds a bounded prompt context containing active skills, document profile, query, and structured-memory summary.
+It does not call an LLM and does not train model weights.
+
+`production_registry.py` demonstrates the production control plane using SQLite.
+It stores immutable skill versions with content hashes, author, reviewer, reason, approval time, and status.
+It stores environment assignments separately, so production activation is an explicit operation rather than an accidental consequence of editing a file.
+Only approved versions can be activated.
+The active assignment can later be changed to an older approved version for rollback.
+The local demo seeds the current evidence-selection skill into the production registry when its registry is empty.
+In a deployed system, use a shared transactional database and immutable object storage instead of per-process SQLite.
+
+The intended production flow is:
+
+```text
+Draft markdown
+  -> validate frontmatter and regression corpus
+  -> business review
+  -> approve immutable version
+  -> activate version in staging or production
+  -> refresh application caches
+  -> record skill version on every evidence result
+  -> rollback by changing the environment assignment
+```
+
+## Skill Workshop UI
+
+Run the latest local UI with:
+
+```sh
+python3 prototype.py --port 8767
+```
+
+Open http://127.0.0.1:8767/.
+The Skill Workshop appears below the evidence and memory panels.
+
+The UI lets a business user:
+
+1. Select an active skill.
+2. Read the exact markdown currently loaded by the application.
+3. Edit the skill content in a draft text area.
+4. Supply the editor name and a change reason.
+5. Publish the reviewed content atomically.
+6. See the active version change immediately.
+7. Continue searching without restarting the Python process.
+
+The next request reloads the markdown because the registry checks modification times.
+The `/api/skill-context` endpoint shows the prompt context that a model adapter would receive.
+The `/api/state` endpoint reports active skills, structured memory, and the production registry assignment.
+The `/api/production-registry` endpoint reports the current production version and immutable version history.
+
+The local UI intentionally has no authentication, roles, or remote sharing.
+For production, put the workshop behind application authentication, restrict publishing to authorized reviewers, validate skill content in a staging environment, require approval before activation, and record every activation event.
+Do not let arbitrary browser input write directly into a production repository.
+
+## Is this an LLM wiki framework?
+
+It is not a specific third-party LLM wiki product.
+It is a framework-neutral implementation of the same useful contract: versioned agent skills, editable knowledge, prompt assembly, approval metadata, hot reload, and structured user memory.
+An LLM wiki or prompt-management provider can replace the local markdown and SQLite adapters later.
+The retrieval, source validation, correction memory, and bookmark-anchor contracts can remain unchanged.
+
+The distinction is intentional:
+
+```text
+Markdown skill = reusable instructions for agent behavior
+Structured memory = confirmed user corrections and provenance
+Production registry = approved version and environment assignment
+PDF evidence = source material that must be validated independently
+```
