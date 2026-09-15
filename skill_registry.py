@@ -43,3 +43,24 @@ class SkillRegistry:
             raise ValueError("Skill changes require an author and reason")
         return dict(author=author, reason=reason,
                     changed_at=datetime.now(timezone.utc).isoformat())
+
+    def publish(self, name, content, author, reason):
+        """Atomically publish one reviewed markdown skill in the local demo."""
+        self.record_change(author, reason)
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name):
+            raise ValueError("Invalid skill name")
+        if not content.lstrip().startswith("---") or "status: active" not in content:
+            raise ValueError("Published skill must contain active frontmatter")
+        target = self.root / name / "SKILL.md"
+        if not target.exists():
+            raise ValueError("Unknown skill")
+        temporary = target.with_suffix(".md.tmp")
+        temporary.write_text(content)
+        temporary.replace(target)
+        return next(item for item in self.list() if item["name"] == name)
+
+    def content(self, name):
+        item = next((item for item in self.list() if item["name"] == name), None)
+        if item is None:
+            raise ValueError("Unknown skill")
+        return Path(item["path"]).read_text()

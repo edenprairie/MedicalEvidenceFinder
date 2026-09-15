@@ -81,6 +81,17 @@ class PrototypeTests(unittest.TestCase):
             self.assertIn("Updated rule", registry.active_text())
             self.assertEqual(registry.list()[0]["version"], "2")
 
+    def test_skill_publish_is_visible_without_restart(self):
+        registry = SkillRegistry(Path(__file__).parent / "skills")
+        original = Path(__file__).parent.joinpath("skills/evidence-selection/SKILL.md").read_text()
+        try:
+            updated = original.replace("version: 1.0.0", "version: 1.0.1").replace("Require review when", "Always require review when")
+            registry.publish("evidence-selection", updated, "test-user", "Test reviewed skill update")
+            self.assertEqual(registry.list()[0]["version"], "1.0.1")
+            self.assertIn("Always require review", registry.active_text())
+        finally:
+            Path(__file__).parent.joinpath("skills/evidence-selection/SKILL.md").write_text(original)
+
     def test_http_search_and_origin_protection(self):
         server = HTTPServer(('127.0.0.1', 0), handler(self.app))
         thread = threading.Thread(target=server.serve_forever, daemon=True)

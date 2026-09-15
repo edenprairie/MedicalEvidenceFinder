@@ -53,6 +53,10 @@ class Prototype:
             memory = dict(active_corrections=sum(r["active"] for r in load_memory(self.corrections)),
                           active_knowledge=sum(r.get("active", False) for r in self.state()["knowledge"]))
             return dict(context=self.skills.build_prompt_context(body.get("query", ""), profile, memory), skills=self.skills.list())
+        if route == "/api/skill-publish":
+            return self.skills.publish(body["name"], body["content"], body.get("author", ""), body.get("reason", ""))
+        if route == "/api/skill":
+            return dict(name=body["name"], content=self.skills.content(body["name"]))
         if route == "/api/search":
             query = body["query"]
             resolved = query
@@ -136,6 +140,9 @@ def handler(prototype):
                 self.respond(200, (ROOT / "index.html").read_text(), "text/html")
             elif self.path == "/api/state":
                 self.respond(200, json.dumps(prototype.state()))
+            elif self.path.startswith("/skills/") and self.path.endswith("/SKILL.md"):
+                name = self.path[len("/skills/"):-len("/SKILL.md")]
+                self.respond(200, prototype.skills.content(name), "text/markdown")
             else:
                 self.respond(404, '{"error":"Not found"}')
 
