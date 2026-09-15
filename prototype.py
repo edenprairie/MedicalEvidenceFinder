@@ -9,6 +9,7 @@ import uuid
 
 from evidence_demo import ROOT, evidence_page, fingerprint, load_memory, normalize, read, remember, revoke, save, search
 from skill_registry import SkillRegistry
+from production_registry import ProductionSkillRegistry
 
 
 class Prototype:
@@ -18,11 +19,19 @@ class Prototype:
         self.knowledge = data / "knowledge.json"
         self.document = read(ROOT / "fixtures/synthetic.json")
         self.skills = SkillRegistry(ROOT / "skills")
+        self.production_skills = ProductionSkillRegistry(data / "production-skills.sqlite")
+        if not self.production_skills.versions("evidence-selection"):
+            skill = self.skills.list()[0]
+            draft = self.production_skills.submit(skill["name"], skill["version"], self.skills.content(skill["name"]), "system-seed", "Initialize production registry demo")
+            approved = self.production_skills.approve(draft["id"], "system-seed")
+            self.production_skills.activate("production", approved["id"], "system-seed")
 
     def state(self):
         return dict(document=self.document, corrections=load_memory(self.corrections),
                     knowledge=read(self.knowledge) if self.knowledge.exists() else [],
-                    skills=self.skills.list())
+                    skills=self.skills.list(),
+                    production_skill=self.production_skills.current("production", "evidence-selection"),
+                    production_versions=self.production_skills.versions("evidence-selection"))
 
     def preview(self, text, query):
         # Deliberately bounded grammar; never executes instructions from source text.
@@ -57,6 +66,8 @@ class Prototype:
             return self.skills.publish(body["name"], body["content"], body.get("author", ""), body.get("reason", ""))
         if route == "/api/skill":
             return dict(name=body["name"], content=self.skills.content(body["name"]))
+        if route == "/api/production-registry":
+            return dict(current=self.production_skills.current("production", body.get("name", "evidence-selection")), versions=self.production_skills.versions(body.get("name", "evidence-selection")))
         if route == "/api/search":
             query = body["query"]
             resolved = query

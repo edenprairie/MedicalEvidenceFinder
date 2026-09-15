@@ -9,6 +9,7 @@ from urllib.error import HTTPError
 
 from prototype import Prototype, handler
 from skill_registry import SkillRegistry
+from production_registry import ProductionSkillRegistry
 
 
 class PrototypeTests(unittest.TestCase):
@@ -85,12 +86,22 @@ class PrototypeTests(unittest.TestCase):
         registry = SkillRegistry(Path(__file__).parent / "skills")
         original = Path(__file__).parent.joinpath("skills/evidence-selection/SKILL.md").read_text()
         try:
-            updated = original.replace("version: 1.0.0", "version: 1.0.1").replace("Require review when", "Always require review when")
+            updated = original.replace("version: 1.0.1", "version: 1.0.2").replace("Always require human review", "Always require additional human review")
             registry.publish("evidence-selection", updated, "test-user", "Test reviewed skill update")
-            self.assertEqual(registry.list()[0]["version"], "1.0.1")
-            self.assertIn("Always require review", registry.active_text())
+            self.assertEqual(registry.list()[0]["version"], "1.0.2")
+            self.assertIn("additional human review", registry.active_text())
         finally:
             Path(__file__).parent.joinpath("skills/evidence-selection/SKILL.md").write_text(original)
+
+    def test_production_registry_requires_approval_before_activation(self):
+        registry = ProductionSkillRegistry(self.data / "production.sqlite")
+        draft = registry.submit("evidence-selection", "2.0.0", "---\nstatus: active\n---\nnew", "editor", "new contract")
+        with self.assertRaises(ValueError):
+            registry.activate("production", draft["id"], "release-bot")
+        approved = registry.approve(draft["id"], "reviewer")
+        current = registry.activate("production", approved["id"], "release-bot")
+        self.assertEqual(current["version"], "2.0.0")
+        self.assertEqual(registry.current("production", "evidence-selection")["id"], approved["id"])
 
     def test_http_search_and_origin_protection(self):
         server = HTTPServer(('127.0.0.1', 0), handler(self.app))

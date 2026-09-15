@@ -17,6 +17,11 @@ The registry checks each skill file's modification time on every request, so an 
 `GET /api/state` reports active skill names and versions; `POST /api/skill-context` returns the assembled context for an LLM adapter.
 In production, put the skills directory behind an authenticated editor and publish reviewed versions atomically.
 
+The prototype also includes `production_registry.py`, a SQLite-backed demonstration of immutable versions and environment assignments.
+It requires approval before activation and records the active production version separately from the editable markdown file.
+The `/api/state` response exposes the current production assignment and version history for the UI to render.
+This is a local reference implementation; a deployed system would use a shared database and object storage rather than per-process SQLite.
+
 ## Browser demo
 
 ```sh
