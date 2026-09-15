@@ -1,6 +1,6 @@
 ---
 name: evidence-selection
-version: 1.0.0
+version: 1.0.1
 status: active
 owner: medical-evidence-team
 review: required-before-production
@@ -17,7 +17,7 @@ Select a substantive source section and return a verifiable location.
 3. Preserve physical page, printed label, heading path, exact quote, and coordinates.
 4. Validate the quote against the selected source revision.
 5. Never transfer a page number alone to another PDF.
-6. Require review when family transfer confidence is below the configured threshold.
+6. Always require human review when family transfer confidence is below the configured threshold.
 
 ## Output contract
 
