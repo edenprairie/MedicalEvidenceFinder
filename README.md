@@ -13,6 +13,9 @@ The `skills/` directory is a versioned, reviewable behavior layer.
 The registry does not call an LLM and is intentionally framework-neutral, so it can later connect to an LLM wiki, hosted prompt registry, or your Python application's own model client.
 Markdown skills explain reusable behavior; JSON or database records retain user corrections and audit history.
 The `/api/skill-context` endpoint shows the exact assembled context for a query without exposing source PDFs.
+The registry checks each skill file's modification time on every request, so an approved markdown edit is picked up without restarting the Python process.
+`GET /api/state` reports active skill names and versions; `POST /api/skill-context` returns the assembled context for an LLM adapter.
+In production, put the skills directory behind an authenticated editor and publish reviewed versions atomically.
 
 ## Browser demo
 

@@ -69,6 +69,18 @@ class PrototypeTests(unittest.TestCase):
         self.assertIn("Never transfer a page number alone", context)
         self.assertIn("query=amber", context)
 
+    def test_skill_registry_hot_reloads_markdown_without_restart(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "demo"
+            path.mkdir()
+            skill = path / "SKILL.md"
+            skill.write_text("---\nname: demo\nversion: 1\nstatus: active\n---\nFirst rule")
+            registry = SkillRegistry(Path(folder))
+            self.assertIn("First rule", registry.active_text())
+            skill.write_text("---\nname: demo\nversion: 2\nstatus: active\n---\nUpdated rule")
+            self.assertIn("Updated rule", registry.active_text())
+            self.assertEqual(registry.list()[0]["version"], "2")
+
     def test_http_search_and_origin_protection(self):
         server = HTTPServer(('127.0.0.1', 0), handler(self.app))
         thread = threading.Thread(target=server.serve_forever, daemon=True)
